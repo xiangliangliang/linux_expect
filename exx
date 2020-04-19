@@ -1,0 +1,35 @@
+#!/usr/bin/expect
+set timeout 3
+set passwd "123456"
+
+spawn sudo su
+expect {
+	"*sudo*" {
+		puts $passwd
+		send "$passwd\r"
+		expect {
+			"root*" {
+						# 获取错误路径的数目
+						set rsp_cnt [exec sh -c { grep 'found-1' grep.txt| wc -l}]
+						
+						if {$rsp_cnt eq 0} {
+							puts "usb-devices check ---> no error"
+							
+						} else {
+							puts "this ip has $rsp_cnt errors"
+							# 修复错误
+							set rsp [exec sh -c { grep 'found-1' grep.txt| sed "s/cat'//g"|while read line;do echo ${line%/*};echo ${line%/*}'/author' >> read.sh; sleep 1; done}]
+							puts $rsp
+						}
+						
+						# 检查 /dev/ttyUBS*
+					}
+				}
+			}
+		}
+
+puts "exit \r"
+expect eof 
+
+
+

@@ -1,0 +1,72 @@
+#!/usr/bin/expect
+# usage expect exx ip device_no
+# https://blog.csdn.net/MoMo_Goder/article/details/80427599
+# https://blog.csdn.net/wjciayf/article/details/54408819
+# https://blog.csdn.net/manyangyang520/article/details/49125227
+
+set timeout 3
+set passwd "ufsufs"
+set pc [lindex $argv 0]
+set ip [lindex $argv 1]
+set device_no [lindex $argv 2]
+
+spawn ssh ufs@$ip -p 8022
+
+expect {
+	"*passwd*" 
+	send {"$passwd\r"}
+	expect {
+		"*$*"
+		send{"sudu su\r"}
+		expect {
+		"*sudo*" {
+			#puts $passwd
+			send "$passwd\r"
+			expect {
+				"*root*" {
+						send "id\r"
+						# 获取错误路径的数目
+						set rsp_cnt [exec sh -c { grep 'found-1' grep.txt| wc -l}]
+						
+						if {$rsp_cnt eq 0} {
+							puts " [ PASS ] usb-devices check ---> $pc has no error"
+							
+						} else {
+							puts " [ REPAIR ] usb-devices check ---> $pc has $rsp_cnt errors"
+							# 修复错误
+							set rsp [exec sh -c { grep 'found-1' grep.txt| sed "s/cat'//g"|while read line;do echo ${line%/*};echo ${line%/*} >> read.sh; sleep 1; done}]
+							puts $rsp
+							
+							# 再次检测错误
+							set rsp_cnt [exec sh -c { grep 'found-1' grep.txt| wc -l}]
+						
+							if {$rsp_cnt eq 0} {
+								puts " [ PASS ] usb-devices check ---> $pc has repaired"
+								
+							} else {
+								puts " [ FAIL ] usb-devices check ---> $pc hasn't repaired, please check by manual"
+								}
+						}
+						
+						# 检查 /dev/ttyUBS*
+						set dev_cnt [exec sh -c { ls /dev/ttyUBS*| wc -l}]
+						puts $dev_cnt
+						if {$dev_cnt eq $device_no} {
+							puts "[ PASS ] device count check ---> $pc uarts are all connected, total"
+							} else {
+							puts "[ FAIL] device count check ---> $pc uarts are not all connected, please check by manual"
+							puts "$dev_cnt"
+							}
+						}
+					}
+				}
+			}
+		}
+}
+
+
+puts "exit \r"
+expect eof 
+
+
+
