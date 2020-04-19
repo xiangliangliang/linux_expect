@@ -65,7 +65,7 @@ expect {
 }
 
 
-puts "exit \r"
+send "exit \r"
 expect eof 
 
 
